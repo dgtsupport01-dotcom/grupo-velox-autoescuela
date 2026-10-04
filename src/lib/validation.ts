@@ -8,6 +8,7 @@ export const CanjeFormSchema = z.object({
   whatsapp: z.string().optional(),
   email: z.string().email('Email inválido'),
   direccion: z.string().min(5, 'Dirección requerida').max(255),
+  nie_dni: z.string().min(5, 'NIE/DNI requerido').max(20),
   numero_permiso: z.string().min(5, 'Número de permiso inválido'),
   fecha_expedicion: z.string().refine((date) => !isNaN(Date.parse(date)), 'Fecha inválida'),
   fecha_caducidad: z.string().refine((date) => !isNaN(Date.parse(date)), 'Fecha inválida'),
