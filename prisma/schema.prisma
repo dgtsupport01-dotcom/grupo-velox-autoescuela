@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  nombre    String
+  apellido  String
+  email     String   @unique
+  telefono  String
+  whatsapp  String?
+  fecha_nacimiento DateTime?
+  direccion String?
+  nie_dni   String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  permisos  Permiso[]
+  documentos Documento[]
+  solicitudes Solicitud[]
+}
+
+model Permiso {
+  id        String   @id @default(cuid())
+  user_id   String
+  numero_permiso String
+  fecha_expedicion DateTime
+  fecha_caducidad DateTime
+  pais_emision String
+  categorias String
+  tipo_solicitud String // "canje" o "nuevo"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Documento {
+  id        String   @id @default(cuid())
+  user_id   String
+  tipo_documento String // "permiso", "identidad", "nie", "otros"
+  ruta_segura String @unique // almacenamiento privado
+  fecha_subida DateTime @default(now())
+  estado_verificacion String @default("pendiente") // "pendiente", "verificado", "rechazado"
+  tamano_bytes Int
+  tipo_mime String
+  hash_archivo String @unique
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Solicitud {
+  id        String   @id @default(cuid())
+  user_id   String
+  tipo_solicitud String // "canje" o "nuevo"
+  estado    String @default("nueva_solicitud") // "nueva_solicitud", "en_revision", "documentos_pendientes", "en_proceso", "completada", "no_elegible"
+  comentario_admin String?
+  notas_internas String?
+  fecha_creacion DateTime @default(now())
+  fecha_actualizacion DateTime @updatedAt
+  consentimiento_datos Boolean @default(false)
+  consentimiento_tratamiento Boolean @default(false)
+  ip_solicitud String?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  logs RegistroAcceso[]
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  nombre    String
+  email     String   @unique
+  password_hash String
+  role      String @default("moderator") // "admin", "moderator"
+  activo    Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  logs RegistroAcceso[]
+}
+
+model RegistroAcceso {
+  id        String   @id @default(cuid())
+  solicitud_id String
+  admin_id  String?
+  accion    String // "creacion", "actualizacion_estado", "nota_anadida", "archivo_verificado", "archivo_rechazado", "contacto_enviado"
+  detalles  String?
+  ip_origen String?
+  user_agent String?
+  timestamp DateTime @default(now())
+
+  solicitud Solicitud @relation(fields: [solicitud_id], references: [id], onDelete: Cascade)
+  admin Admin? @relation(fields: [admin_id], references: [id], onDelete: SetNull)
+}
