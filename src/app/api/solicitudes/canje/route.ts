@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CanjeFormSchema, NuevoPermisoFormSchema } from '@/lib/validation';
+import { CanjeFormSchema } from '@/lib/validation';
 import prisma from '@/lib/prisma';
-import { saveFile, validateFile, generateSecureFilename, generateFileHash } from '@/lib/file-handler';
 import { sanitizeInput } from '@/lib/security';
 import { getClientIp } from '@/lib/middleware';
 
@@ -27,12 +26,13 @@ export async function POST(req: NextRequest) {
       nombre: sanitizeInput(validatedData.nombre),
       apellido: sanitizeInput(validatedData.apellido),
       email: validatedData.email.toLowerCase(),
-      direccion: sanitizeInput(validatedData.direccion)
+      direccion: sanitizeInput(validatedData.direccion),
+      nie_dni: sanitizeInput(validatedData.nie_dni)
     };
 
     // Verificar si el usuario ya existe
     let user = await prisma.user.findUnique({
-      where: { nie_dni: sanitizedData.nie_dni as string }
+      where: { nie_dni: sanitizedData.nie_dni }
     });
 
     if (!user) {
